@@ -62,30 +62,32 @@
   }
   function renderChrome() {
     var shopActive = page === "products" || page === "product";
-    var navPage = shopActive ? "products" : page;
+    var current = page;
+    page = shopActive ? "products" : page; // so navLink highlights Shop on product pages
     var h = qs("#site-header");
     if (h) {
-      page = navPage; // so navLink highlights Shop on product pages
-      h.innerHTML = '<header class="site-header on-dark"><div class="wrap header-inner">' +
+      h.innerHTML = '<header class="site-header">' +
+        '<div class="top-bar"><div class="wrap top-inner">' +
         '<a class="wordmark" href="index.html" aria-label="Aroma 17 home">AROMA 17</a>' +
-        '<nav class="main-nav" aria-label="Main"><ul>' +
+        '<a class="btn btn-amber btn-sm header-cta" href="order.html" aria-label="Order via WhatsApp">Order<span class="hide-sm"> via WhatsApp</span></a>' +
+        '</div></div>' +
+        '<div class="nav-bar"><div class="wrap"><nav class="main-nav" aria-label="Main"><ul>' +
         navLink("index.html", "Home", "home") +
         navLink("products.html", "Shop", "products") +
         navLink("contact.html", "Contact", "contact") +
-        '</ul></nav>' +
-        '<a class="btn btn-gold btn-sm header-cta" href="order.html" aria-label="Order via WhatsApp">Order<span class="hide-sm"> via WhatsApp</span></a>' +
-        '</div></header>';
-      page = qs("[data-page]").getAttribute("data-page");
+        '</ul></nav></div></div>' +
+        '<p class="announce">Luxury decants in 2 ml, 5 ml and 10 ml. Orders handled personally on WhatsApp.</p>' +
+        '</header>';
     }
+    page = current;
     var f = qs("#site-footer");
     if (f) {
-      f.innerHTML = '<footer class="site-footer on-dark"><div class="wrap footer-inner">' +
-        '<div><a class="wordmark" href="index.html" aria-label="Aroma 17 home">AROMA 17</a>' +
-        '<p class="footer-tag">Luxury fragrance decants in 2 ml, 5 ml and 10 ml.</p></div>' +
-        '<nav aria-label="Footer"><ul class="footer-nav">' +
+      f.innerHTML = '<footer class="site-footer"><div class="wrap footer-inner">' +
+        '<div><h2 class="footer-h">About</h2><p class="footer-tag">Aroma 17 sells luxury fragrance decants in 2 ml, 5 ml and 10 ml.</p></div>' +
+        '<nav aria-label="Footer"><h2 class="footer-h">Explore</h2><ul class="footer-nav">' +
         '<li><a href="index.html">Home</a></li><li><a href="products.html">Shop</a></li>' +
         '<li><a href="order.html">Order</a></li><li><a href="contact.html">Contact</a></li></ul></nav>' +
-        '<div class="footer-contact"><p>WhatsApp: <a href="' + waLink("Hello Aroma 17") + '" target="_blank" rel="noopener">' + esc(waDisplay()) + '</a></p>' +
+        '<div class="footer-contact"><h2 class="footer-h">Contact</h2><p>WhatsApp: <a href="' + waLink("Hello Aroma 17") + '" target="_blank" rel="noopener">' + esc(waDisplay()) + '</a></p>' +
         '<p>' + esc(BUSINESS.address) + '</p></div>' +
         '</div><div class="wrap footer-base"><p>&copy; ' + new Date().getFullYear() + ' Aroma 17. All rights reserved.</p></div></footer>';
     }
@@ -133,7 +135,7 @@
       extras.forEach(function (e) { e.hidden = true; });
       root.innerHTML = '<div class="not-found"><h1>We could not find that fragrance</h1>' +
         '<p>The link may be out of date. Browse the full collection to find what you are looking for.</p>' +
-        '<a class="btn btn-ink" href="products.html">Back to Shop</a></div>';
+        '<a class="btn btn-amber" href="products.html">Back to Shop</a></div>';
       return;
     }
     document.title = p.name + " | Aroma 17";
@@ -152,8 +154,8 @@
       '<div class="toggles" id="sizes">' + SIZES.map(function (s) {
         return '<button type="button" class="toggle" data-size="' + s + '" aria-pressed="false">' + s + ' ml</button>';
       }).join("") + '</div></div>' +
-      '<div class="actions"><a class="btn btn-ink" id="order-link" href="order.html">Order this decant</a>' +
-      '<a class="btn btn-outline-dark" href="contact.html">Ask a question</a></div>' +
+      '<div class="actions"><a class="btn btn-amber" id="order-link" href="order.html">Order this decant</a>' +
+      '<a class="btn btn-outline" href="contact.html">Ask a question</a></div>' +
       (hasNotes ? '<table class="notes"><caption>Fragrance notes</caption><tbody>' + rows.map(function (r) {
         return '<tr><th scope="row">' + r[0] + '</th><td>' + esc(r[1]) + '</td></tr>';
       }).join("") + '</tbody></table>' : '') +
