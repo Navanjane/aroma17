@@ -1,0 +1,9 @@
+{
+  "cleanUrls": false,
+  "functions": {
+    "api/**/*.js": { "includeFiles": "data/seed.db", "maxDuration": 30 }
+  },
+  "headers": [
+    { "source": "/admin.html", "headers": [{ "key": "X-Robots-Tag", "value": "noindex" }, { "key": "Cache-Control", "value": "no-store" }] }
+  ]
+}

@@ -228,7 +228,8 @@ a { color: inherit; }
   :root { --gutter: 32px; }
   .hide-sm { display: inline; }
   .grid { grid-template-columns: repeat(2, 1fr); }
-  .tiles, .size-cards, .steps, .strip-grid { grid-template-columns: repeat(3, 1fr); }
+  .tiles, .steps, .strip-grid { grid-template-columns: repeat(3, 1fr); }
+  .size-cards { grid-template-columns: repeat(2, 1fr); }
   .footer-inner { grid-template-columns: 1.4fr 1fr 1fr; }
   .wordmark { font-size: 1.5rem; }
 }

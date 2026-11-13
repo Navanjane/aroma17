@@ -1,6 +1,6 @@
 # Aroma 17
 
-Static website for a luxury perfume decant business. Plain HTML, CSS and vanilla JS. No build step, no backend. Orders are sent through WhatsApp.
+Static website for a luxury perfume decant business. Plain HTML, CSS and vanilla JS. Orders are sent through WhatsApp. Products and site details live in SQLite and are edited on `/admin.html`.
 
 ## Preview
 
@@ -8,41 +8,33 @@ Open `index.html` in a browser, or run a local server:
 
     npx serve
 
-## Change the WhatsApp number
+## How data is stored
 
-Edit `WHATSAPP_NUMBER` at the top of `js/products.js`. Use international format, digits only:
+- **SQLite database:** `data/seed.db` ships in the repo as the starting data. Vercel's project files are read-only at runtime, so the *live* database is a copy kept in **Vercel Blob** (`db/aroma17.db`). Every admin save edits it and uploads it back. Until the first save, the site reads `seed.db`.
+- **Images:** uploaded from the admin page to Vercel Blob (`images/...`). The two starter photos still come from `images/` in the repo.
+- **Limits:** built for one admin. Two people saving at the same moment can overwrite each other's change. Image uploads are capped at 4 MB (Vercel's request limit).
 
-    const WHATSAPP_NUMBER = "94771234567";
+## Deploy on Vercel
 
-Every WhatsApp link on the site uses this one value. While it still contains `X`, the footer and contact page show `[WHATSAPP NUMBER]`.
+1. Import the repo. Vercel installs dependencies and detects `api/`.
+2. In the project, add a **Blob store** (Storage tab). This sets `BLOB_READ_WRITE_TOKEN` automatically.
+3. Add environment variable `ADMIN_PASSWORD` (a long password). Optionally `SESSION_SECRET` (random string).
+4. Deploy, open `/admin.html`, log in, and fill in **Site details** (WhatsApp number, email, address, hours) and your products.
 
-Other placeholders (`BUSINESS.email`, `BUSINESS.address`, `BUSINESS.hours`) are in the same file.
+## Run locally
 
-## Add a product
+    npm install
+    ADMIN_PASSWORD=secret npm run dev      # http://localhost:3000, admin at /admin.html
 
-Add an object to the `products` array in `js/products.js`:
-
-    {
-      slug: "my-fragrance",          // used in URLs and as the photo file name
-      name: "My Fragrance",
-      brand: "Brand",
-      category: "Him",               // "Him", "Her" or "Unisex"
-      description: "One or two sentences.",
-      notes: { top: "", heart: "", base: "" },   // leave empty to hide the notes block
-      prices: { 2: 1000, 5: 2200, 10: 4000 }     // LKR
-    }
-
-The listing, product page and order page update automatically. Prices in the file are sample values.
-
-## Add photos
-
-Save each photo as `images/<slug>.jpg` (for example `images/ysl-libre.jpg`). Products without a photo show a "PRODUCT PHOTO" placeholder. See `images/README.md`.
+Locally the database is `data/local.db` (git-ignored, copied from the seed) and photo upload is off unless you set `BLOB_READ_WRITE_TOKEN` (`vercel env pull`). `npm run seed` rebuilds `data/seed.db` from `scripts/seed-data.js`. Only needed to change the starter catalogue.
 
 ## Files
 
-- `index.html`, `products.html`, `product.html`, `order.html`, `contact.html`
-- `css/styles.css` - all styling and colour variables
-- `js/products.js` - configuration and product data
-- `js/main.js` - shared header/footer and page logic
+- `index.html`, `products.html`, `product.html`, `order.html`, `contact.html` - the shop
+- `admin.html`, `js/admin.js`, `css/admin.css` - login + product CRUD + site details
+- `api/site.js` - public data; `api/admin/*` - login, products, settings, upload
+- `lib/` - SQLite/Blob sync, auth, validation, schema
+- `css/styles.css`, `js/main.js`, `js/config.js` - shop styling, page logic, decant sizes
+- `vercel.json` - bundles `data/seed.db` into the functions
 
-Note: `serve.json` turns off clean URLs. Without it, `npx serve` redirects `product.html?slug=x` to `/product` and drops the query string, so the product and order pages lose their selection.
+The site no longer works by opening the HTML files directly: it needs `/api/site`, so use `npm run dev` or Vercel.

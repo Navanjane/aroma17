@@ -1,5 +1,5 @@
 /* Aroma 17 - shared header/footer and page logic.
-   Depends on js/products.js (loaded first). */
+   Depends on js/config.js (loaded first). */
 (function () {
   "use strict";
 
@@ -7,6 +7,8 @@
   var qsa = function (s, r) { return Array.prototype.slice.call((r || document).querySelectorAll(s)); };
   var params = new URLSearchParams(window.location.search);
   var page = qs("[data-page]").getAttribute("data-page");
+  // Filled from /api/site before any page code runs.
+  var products = [], SETTINGS = {};
 
   function esc(s) {
     return String(s).replace(/[&<>"']/g, function (c) {
@@ -15,8 +17,8 @@
   }
   function money(n) { return "LKR " + Number(n).toLocaleString("en-US"); }
   function findProduct(slug) { return products.filter(function (p) { return p.slug === slug; })[0]; }
-  function waLink(text) { return "https://wa.me/" + WHATSAPP_NUMBER + "?text=" + encodeURIComponent(text); }
-  function waDisplay() { return /X/i.test(WHATSAPP_NUMBER) ? "[WHATSAPP NUMBER]" : "+" + WHATSAPP_NUMBER; }
+  function waLink(text) { return "https://wa.me/" + SETTINGS.whatsapp + "?text=" + encodeURIComponent(text); }
+  function waDisplay() { return /X/i.test(SETTINGS.whatsapp) ? "[WHATSAPP NUMBER]" : "+" + SETTINGS.whatsapp; }
   function validSize(n) { n = parseInt(n, 10); return SIZES.indexOf(n) > -1 ? n : null; }
   function catLabel(c) { return c === "Unisex" ? "Unisex" : "For " + c; }
 
@@ -28,7 +30,7 @@
   function media(p, extra) {
     return '<div class="media ' + (extra || "") + '">' +
       '<div class="media-ph">' + VIAL + '<span>PRODUCT PHOTO</span></div>' +
-      '<img src="images/' + esc(p.slug) + '.jpg" alt="' + esc(p.brand + " " + p.name + " decant") + '" loading="lazy">' +
+      (p.image ? '<img src="' + esc(p.image) + '" alt="' + esc(p.brand + " " + p.name + " decant") + '" loading="lazy">' : "") +
       '</div>';
   }
   // Remove images that fail to load so the placeholder underneath shows.
@@ -76,29 +78,32 @@
         navLink("products.html", "Shop", "products") +
         navLink("contact.html", "Contact", "contact") +
         '</ul></nav></div></div>' +
-        '<p class="announce">Luxury decants in 2 ml, 5 ml and 10 ml. Orders handled personally on WhatsApp.</p>' +
+        '<p class="announce">' + esc(SETTINGS.announcement) + '</p>' +
         '</header>';
     }
     page = current;
     var f = qs("#site-footer");
     if (f) {
       f.innerHTML = '<footer class="site-footer"><div class="wrap footer-inner">' +
-        '<div><h2 class="footer-h">About</h2><p class="footer-tag">Aroma 17 sells luxury fragrance decants in 2 ml, 5 ml and 10 ml.</p></div>' +
+        '<div><h2 class="footer-h">About</h2><p class="footer-tag">Aroma 17 sells luxury fragrance decants in 5 ml and 10 ml.</p></div>' +
         '<nav aria-label="Footer"><h2 class="footer-h">Explore</h2><ul class="footer-nav">' +
         '<li><a href="index.html">Home</a></li><li><a href="products.html">Shop</a></li>' +
         '<li><a href="order.html">Order</a></li><li><a href="contact.html">Contact</a></li></ul></nav>' +
         '<div class="footer-contact"><h2 class="footer-h">Contact</h2><p>WhatsApp: <a href="' + waLink("Hello Aroma 17") + '" target="_blank" rel="noopener">' + esc(waDisplay()) + '</a></p>' +
-        '<p>' + esc(BUSINESS.address) + '</p></div>' +
+        '<p>' + esc(SETTINGS.address) + '</p></div>' +
         '</div><div class="wrap footer-base"><p>&copy; ' + new Date().getFullYear() + ' Aroma 17. All rights reserved.</p></div></footer>';
     }
   }
 
   /* ---------- Home ---------- */
   function initHome() {
-    var el = qs("[data-bestsellers]");
-    el.innerHTML = ["dior-sauvage-edt", "ysl-libre", "baccarat-rouge-540"].map(function (s) {
-      var p = findProduct(s); return p ? card(p, "from") : "";
-    }).join("");
+    var list = products.filter(function (p) { return p.bestseller; });
+    if (!list.length) { list = products.slice(0, 3); }
+    qs("[data-bestsellers]").innerHTML = list.map(function (p) { return card(p, "from"); }).join("");
+    qsa("[data-setting]").forEach(function (el) {
+      var v = SETTINGS[el.getAttribute("data-setting")];
+      if (v) { el.textContent = v; }
+    });
   }
 
   /* ---------- Listing ---------- */
@@ -159,7 +164,7 @@
       (hasNotes ? '<table class="notes"><caption>Fragrance notes</caption><tbody>' + rows.map(function (r) {
         return '<tr><th scope="row">' + r[0] + '</th><td>' + esc(r[1]) + '</td></tr>';
       }).join("") + '</tbody></table>' : '') +
-      (p.credit ? '<p class="credit">Photo: <a href="' + esc(p.credit.url) + '" target="_blank" rel="noopener">' + esc(p.credit.author) + '</a>, ' + esc(p.credit.license) + ', via Wikimedia Commons. Shows the retail product, not the decant.</p>' : '') +
+      (p.credit && p.credit.text ? '<p class="credit">Photo: ' + (p.credit.url ? '<a href="' + esc(p.credit.url) + '" target="_blank" rel="noopener">' + esc(p.credit.text) + '</a>' : esc(p.credit.text)) + '. Shows the retail product, not the decant.</p>' : '') +
       '</div></div>';
     function update() {
       qs("#price").textContent = money(p.prices[size]) + " · " + size + " ml";
@@ -235,11 +240,21 @@
     [n, w, m].forEach(function (i) { i.addEventListener("input", build); });
     build();
     qsa("[data-wa-number]").forEach(function (a) { a.setAttribute("href", waLink("Hello Aroma 17")); a.textContent = waDisplay(); });
-    qsa("[data-business]").forEach(function (el) { el.textContent = BUSINESS[el.getAttribute("data-business")]; });
+    qsa("[data-business]").forEach(function (el) { el.textContent = SETTINGS[el.getAttribute("data-business")] || "Ask us on WhatsApp"; });
   }
 
-  renderChrome();
   var inits = { home: initHome, products: initProducts, product: initProduct, order: initOrder, contact: initContact };
-  if (inits[page]) { inits[page](); }
-  checkImages();
+  fetch("/api/site", { cache: "no-store" })
+    .then(function (r) { if (!r.ok) { throw new Error("HTTP " + r.status); } return r.json(); })
+    .then(function (d) { products = d.products; SETTINGS = d.settings; })
+    .catch(function () {
+      SETTINGS = { whatsapp: "94XXXXXXXXX", announcement: "", address: "" };
+      var m = qs("#main");
+      if (m) { m.insertAdjacentHTML("afterbegin", '<div class="wrap"><p role="alert" style="padding:24px 0;color:#fff">We could not load the shop right now. Please refresh in a moment.</p></div>'); }
+    })
+    .then(function () {
+      renderChrome();
+      if (inits[page]) { inits[page](); }
+      checkImages();
+    });
 })();
