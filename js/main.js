@@ -190,7 +190,7 @@
       qs("#order-empty").hidden = false;
       return;
     }
-    var st = { slug: first.slug, size: validSize(params.get("size")) || 5, qty: 1, name: "", city: "" };
+    var st = { slug: first.slug, size: validSize(params.get("size")) || 5, qty: 1, name: "", phone: "", city: "" };
     var sz = qs("#sizes"), qty = qs("#qty");
     qs("#chosen-brand").textContent = first.brand;
     qs("#chosen-name").textContent = first.name;
@@ -215,7 +215,8 @@
       qs("#sum-total").textContent = money(total);
       var lines = ["Hello Aroma 17, I would like to order:", st.qty + " x " + p.name + " (" + st.size + " ml decant)", "Total: " + money(total)];
       if (st.name.trim()) { lines.push("Name: " + st.name.trim()); }
-      if (st.city.trim()) { lines.push("City: " + st.city.trim()); }
+      if (st.phone.trim()) { lines.push("Phone: " + st.phone.trim()); }
+      if (st.city.trim()) { lines.push("Address: " + st.city.trim()); }
       qs("#wa-btn").setAttribute("href", waLink(lines.join("\n")));
       try { history.replaceState(null, "", "order.html?slug=" + encodeURIComponent(st.slug) + "&size=" + st.size); } catch (e) { /* file:// */ }
     }
@@ -225,6 +226,7 @@
     qty.addEventListener("input", function () { if (qty.value !== "") { st.qty = clamp(qty.value); render(); } });
     qty.addEventListener("blur", function () { qty.value = st.qty; });
     qs("#cust-name").addEventListener("input", function (e) { st.name = e.target.value; render(); });
+    qs("#cust-phone").addEventListener("input", function (e) { st.phone = e.target.value; render(); });
     qs("#cust-city").addEventListener("input", function (e) { st.city = e.target.value; render(); });
     render();
   }
@@ -250,7 +252,7 @@
     .catch(function () {
       SETTINGS = { whatsapp: "94XXXXXXXXX", announcement: "", address: "" };
       var m = qs("#main");
-      if (m) { m.insertAdjacentHTML("afterbegin", '<div class="wrap"><p role="alert" style="padding:24px 0;color:#fff">We could not load the shop right now. Please refresh in a moment.</p></div>'); }
+      if (m) { m.insertAdjacentHTML("afterbegin", '<div class="wrap"><p role="alert" style="padding:24px 0;color:#1d1d1f">We could not load the shop right now. Please refresh in a moment.</p></div>'); }
     })
     .then(function () {
       renderChrome();
