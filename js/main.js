@@ -199,6 +199,25 @@
       return '<button type="button" class="toggle" data-size="' + s + '" aria-pressed="false">' + s + ' ml</button>';
     }).join("");
 
+    function detailsOk() { return st.name.trim() && st.city.trim() && st.phone.replace(/\D/g, "").length >= 7; }
+    function showErr() {
+      var miss = [];
+      if (!st.name.trim()) { miss.push("full name"); }
+      if (st.phone.replace(/\D/g, "").length < 7) { miss.push("a valid phone number"); }
+      if (!st.city.trim()) { miss.push("address"); }
+      var el = qs("#details-err");
+      el.textContent = miss.length ? "Please enter your " + miss.join(", ") + " before ordering." : "";
+      el.hidden = !miss.length;
+      return miss.length;
+    }
+    qs("#wa-btn").addEventListener("click", function (e) {
+      if (showErr()) {
+        e.preventDefault();
+        var f = !st.name.trim() ? "#cust-name" : (st.phone.replace(/\D/g, "").length < 7 ? "#cust-phone" : "#cust-city");
+        qs(f).focus();
+      }
+    });
+    ["#cust-name", "#cust-phone", "#cust-city"].forEach(function (id) { qs(id).addEventListener("input", function () { if (!qs("#details-err").hidden) { showErr(); } }); });
     function clamp(v) { v = parseInt(v, 10); if (isNaN(v)) { v = 1; } return Math.min(20, Math.max(1, v)); }
     function render() {
       var p = findProduct(st.slug), unit = p.prices[st.size], total = unit * st.qty;
@@ -214,10 +233,9 @@
       qs("#sum-unit").textContent = money(unit);
       qs("#sum-total").textContent = money(total);
       var lines = ["Hello Aroma 17, I would like to order:", st.qty + " x " + p.name + " (" + st.size + " ml decant)", "Total: " + money(total)];
-      if (st.name.trim()) { lines.push("Name: " + st.name.trim()); }
-      if (st.phone.trim()) { lines.push("Phone: " + st.phone.trim()); }
-      if (st.city.trim()) { lines.push("Address: " + st.city.trim()); }
+      lines.push("Name: " + st.name.trim(), "Phone: " + st.phone.trim(), "Address: " + st.city.trim(), "", "_*Ordered via website*_");
       qs("#wa-btn").setAttribute("href", waLink(lines.join("\n")));
+      qs("#wa-btn").setAttribute("aria-disabled", String(!detailsOk()));
       try { history.replaceState(null, "", "order.html?slug=" + encodeURIComponent(st.slug) + "&size=" + st.size); } catch (e) { /* file:// */ }
     }
     sz.addEventListener("click", function (e) { var b = e.target.closest("[data-size]"); if (b) { st.size = parseInt(b.getAttribute("data-size"), 10); render(); } });

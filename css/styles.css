@@ -363,3 +363,6 @@ a { color: var(--link); }
 @media (prefers-reduced-motion: no-preference) {
   .btn, .card, .tile, .toggle, .filter { transition: background-color .2s, color .2s, border-color .2s; }
 }
+
+.sum-err { color: #d70015; font-size: .9rem; text-align: center; margin: 10px 0 0; }
+.btn-wa[aria-disabled="true"] { opacity: .5; }
