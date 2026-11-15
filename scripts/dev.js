@@ -14,9 +14,14 @@ http.createServer((req, res) => {
   }
   let p = path.normalize(path.join(root, url.pathname === "/" ? "index.html" : url.pathname));
   const rel = path.relative(root, p);
-  if (rel.startsWith("..") || /^(lib|data|scripts|node_modules|api)([\\/]|$)|^\./.test(rel)) { res.statusCode = 404; return res.end("Not found"); }
+  // Like Vercel: unknown or private paths get 404.html with a 404 status.
+  const notFound = () => fs.readFile(path.join(root, "404.html"), (e, b) => {
+    res.statusCode = 404; res.setHeader("Content-Type", "text/html");
+    res.end(e ? "Not found" : b);
+  });
+  if (rel.startsWith("..") || /^(lib|data|scripts|node_modules|api)([\\/]|$)|^\./.test(rel)) { return notFound(); }
   fs.readFile(p, (err, buf) => {
-    if (err) { res.statusCode = 404; return res.end("Not found"); }
+    if (err) { return notFound(); }
     res.setHeader("Content-Type", types[path.extname(p)] || "application/octet-stream");
     res.end(buf);
   });
