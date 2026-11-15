@@ -7,6 +7,16 @@
   function esc(s) { return String(s == null ? "" : s).replace(/[&<>"']/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]; }); }
   function $(s, r) { return (r || document).querySelector(s); }
 
+  /* Perfume-spray loader (styles in css/admin.css). Held at least ~1s so the spray plays. */
+  var loaderEl = document.createElement("div");
+  loaderEl.className = "loader";
+  loaderEl.setAttribute("role", "status");
+  loaderEl.innerHTML = "<div class=\"loader-box\"><svg class=\"bottle\" viewBox=\"-20 0 140 130\" width=\"140\" height=\"130\" aria-hidden=\"true\" focusable=\"false\"><defs><clipPath id=\"bottle-clip\"><rect x=\"34\" y=\"58\" width=\"44\" height=\"64\" rx=\"9\"/></clipPath></defs><g class=\"bottle-liquid\" clip-path=\"url(#bottle-clip)\"><rect class=\"liquid\" x=\"28\" y=\"58\" width=\"56\" height=\"70\" fill=\"#0071e3\" opacity=\".85\"/></g><rect x=\"34\" y=\"58\" width=\"44\" height=\"64\" rx=\"9\" fill=\"none\" stroke=\"#1d1d1f\" stroke-width=\"2.5\"/><rect x=\"49\" y=\"46\" width=\"14\" height=\"12\" fill=\"none\" stroke=\"#1d1d1f\" stroke-width=\"2.5\"/><rect x=\"42\" y=\"36\" width=\"28\" height=\"10\" rx=\"3\" fill=\"#1d1d1f\"/><g class=\"pump\"><rect x=\"52\" y=\"22\" width=\"8\" height=\"14\" fill=\"#1d1d1f\"/><path d=\"M44 22h24a2 2 0 0 0 2-2v-4a2 2 0 0 0-2-2H52l-8 2z\" fill=\"#1d1d1f\"/><circle cx=\"43\" cy=\"18\" r=\"1.6\" fill=\"#fff\"/></g><g class=\"mist\" fill=\"#0071e3\"><circle class=\"m1\" cx=\"38\" cy=\"18\" r=\"3.2\"/><circle class=\"m2\" cx=\"38\" cy=\"18\" r=\"2.6\"/><circle class=\"m3\" cx=\"38\" cy=\"18\" r=\"3\"/><circle class=\"m4\" cx=\"38\" cy=\"18\" r=\"2.2\"/><circle class=\"m5\" cx=\"38\" cy=\"18\" r=\"2.8\"/></g></svg><p class=\"loader-text\">Loading&hellip;</p></div>";
+  document.body.appendChild(loaderEl);
+  var loaderAt = 0, loaderTimer = null;
+  function showLoader(text) { clearTimeout(loaderTimer); loaderAt = Date.now(); loaderEl.querySelector(".loader-text").textContent = text; loaderEl.classList.add("is-on"); }
+  function hideLoader() { clearTimeout(loaderTimer); loaderTimer = setTimeout(function () { loaderEl.classList.remove("is-on"); }, Math.max(0, 1000 - (Date.now() - loaderAt))); }
+
   function api(method, url, body, raw) {
     var opt = { method: method, credentials: "same-origin", headers: {} };
     if (raw) { opt.body = raw; } else if (body) { opt.headers["Content-Type"] = "application/json"; opt.body = JSON.stringify(body); }
@@ -29,7 +39,8 @@
     $("#pw").focus();
     $("#login").addEventListener("submit", function (e) {
       e.preventDefault();
-      api("POST", "/api/admin/login", { password: $("#pw").value }).then(load).catch(function (err) { msg($("#lm"), err.message); });
+      showLoader("Logging in\u2026");
+      api("POST", "/api/admin/login", { password: $("#pw").value }).then(load).then(hideLoader).catch(function (err) { hideLoader(); msg($("#lm"), err.message); });
     });
   }
 
@@ -45,7 +56,10 @@
       ['products:Products', 'settings:Site details'].map(function (t) { var k = t.split(":");
         return '<button class="a-tab" role="tab" data-tab="' + k[0] + '" aria-selected="' + (state.tab === k[0]) + '">' + k[1] + '</button>'; }).join("") +
       '</div><div id="pane"></div>';
-    $("#logout").addEventListener("click", function () { api("DELETE", "/api/admin/login").then(showLogin); });
+    $("#logout").addEventListener("click", function () {
+      showLoader("Logging out\u2026");
+      api("DELETE", "/api/admin/login").then(showLogin).then(hideLoader, hideLoader);
+    });
     Array.prototype.forEach.call(app.querySelectorAll("[data-tab]"), function (b) {
       b.addEventListener("click", function () { state.tab = b.getAttribute("data-tab"); state.editing = null; render(); });
     });
