@@ -366,3 +366,22 @@ a { color: var(--link); }
 
 .sum-err { color: #d70015; font-size: .9rem; text-align: center; margin: 10px 0 0; }
 .btn-wa[aria-disabled="true"] { opacity: .5; }
+
+/* Perfume-bottle loader */
+.loader { position: fixed; inset: 0; z-index: 1000; display: flex; align-items: center; justify-content: center; background: rgba(255,255,255,.92); -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px); opacity: 0; visibility: hidden; transition: opacity .3s, visibility .3s; }
+.loader.is-on { opacity: 1; visibility: visible; }
+.loader-box { text-align: center; }
+.loader-text { margin: 14px 0 0; font-size: .95rem; color: var(--label-2); }
+.bottle { display: block; margin: 0 auto; overflow: visible; }
+.bottle .liquid { transform-box: fill-box; animation: bottle-fill 1.3s ease-in-out infinite; }
+.bottle .pump { animation: bottle-pump 1.3s ease-in-out infinite; }
+.bottle .mist circle { opacity: 0; transform-box: fill-box; transform-origin: center; animation: bottle-mist 1.3s ease-out infinite; }
+.bottle .mist .m2 { --dx: -30px; --dy: -14px; animation-delay: .04s; }
+.bottle .mist .m1 { --dx: -36px; --dy: 0px; }
+.bottle .mist .m3 { --dx: -28px; --dy: 16px; animation-delay: .08s; }
+.bottle .mist .m4 { --dx: -40px; --dy: -7px; animation-delay: .12s; }
+.bottle .mist .m5 { --dx: -42px; --dy: 9px; animation-delay: .16s; }
+@keyframes bottle-fill { 0% { transform: translateY(75%); } 35%, 100% { transform: translateY(0); } }
+@keyframes bottle-pump { 0%, 30%, 55%, 100% { transform: translateY(0); } 38% { transform: translateY(6px); } }
+@keyframes bottle-mist { 0%, 34% { opacity: 0; transform: translate(0, 0) scale(.8); } 40% { opacity: 1; } 85%, 100% { opacity: 0; transform: translate(var(--dx), var(--dy)) scale(1.4); } }
+@media (prefers-reduced-motion: reduce) { .bottle .liquid, .bottle .pump, .bottle .mist circle { animation: none; } .bottle .liquid { transform: translateY(25%); } .loader { transition: none; } }

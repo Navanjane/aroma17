@@ -10,6 +10,38 @@
   // Filled from /api/site before any page code runs.
   var products = [], SETTINGS = {};
 
+  /* ---------- Perfume-bottle loader ---------- */
+  var loaderEl = (function () {
+    var el = document.createElement("div");
+    el.className = "loader is-on";
+    el.setAttribute("role", "status");
+    el.innerHTML = '<div class="loader-box"><svg class="bottle" viewBox="-20 0 140 130" width="140" height="130" aria-hidden="true" focusable="false">' +
+      '<defs><clipPath id="bottle-clip"><rect x="34" y="58" width="44" height="64" rx="9"/></clipPath></defs>' +
+      '<g class="bottle-liquid" clip-path="url(#bottle-clip)"><rect class="liquid" x="28" y="58" width="56" height="70" fill="#0071e3" opacity=".85"/></g>' +
+      '<rect x="34" y="58" width="44" height="64" rx="9" fill="none" stroke="#1d1d1f" stroke-width="2.5"/>' +
+      '<rect x="49" y="46" width="14" height="12" fill="none" stroke="#1d1d1f" stroke-width="2.5"/>' +
+      '<rect x="42" y="36" width="28" height="10" rx="3" fill="#1d1d1f"/>' +
+      '<g class="pump"><rect x="52" y="22" width="8" height="14" fill="#1d1d1f"/><path d="M44 22h24a2 2 0 0 0 2-2v-4a2 2 0 0 0-2-2H52l-8 2z" fill="#1d1d1f"/><circle cx="43" cy="18" r="1.6" fill="#fff"/></g>' +
+      '<g class="mist" fill="#0071e3"><circle class="m1" cx="38" cy="18" r="3.2"/><circle class="m2" cx="38" cy="18" r="2.6"/><circle class="m3" cx="38" cy="18" r="3"/><circle class="m4" cx="38" cy="18" r="2.2"/><circle class="m5" cx="38" cy="18" r="2.8"/></g>' +
+      '</svg><p class="loader-text">Loading&hellip;</p></div>';
+    document.body.appendChild(el);
+    return el;
+  })();
+  var loaderTimer = null;
+  function showLoader(text) { clearTimeout(loaderTimer); loaderEl.querySelector(".loader-text").textContent = text || "Loading\u2026"; loaderEl.classList.add("is-on"); }
+  function hideLoader() { clearTimeout(loaderTimer); loaderEl.classList.remove("is-on"); }
+  var loaderStart = Date.now();
+  // Between pages: show on internal link clicks. bfcache restore: hide again.
+  document.addEventListener("click", function (e) {
+    var a = e.target.closest && e.target.closest("a[href]");
+    if (!a || e.defaultPrevented || e.button || e.metaKey || e.ctrlKey || e.shiftKey || a.target === "_blank" || a.hasAttribute("download")) { return; }
+    var u = a.getAttribute("href");
+    if (!u || u.charAt(0) === "#" || /^(mailto:|tel:|https?:|javascript:)/i.test(u)) { return; }
+    showLoader();
+    loaderTimer = setTimeout(hideLoader, 8000);
+  });
+  window.addEventListener("pageshow", function (e) { if (e.persisted) { hideLoader(); } });
+
   function esc(s) {
     return String(s).replace(/[&<>"']/g, function (c) {
       return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c];
@@ -215,6 +247,9 @@
         e.preventDefault();
         var f = !st.name.trim() ? "#cust-name" : (st.phone.replace(/\D/g, "").length < 7 ? "#cust-phone" : "#cust-city");
         qs(f).focus();
+      } else {
+        showLoader("Opening WhatsApp\u2026");
+        loaderTimer = setTimeout(hideLoader, 1600);
       }
     });
     ["#cust-name", "#cust-phone", "#cust-city"].forEach(function (id) { qs(id).addEventListener("input", function () { if (!qs("#details-err").hidden) { showErr(); } }); });
@@ -276,5 +311,7 @@
       renderChrome();
       if (inits[page]) { inits[page](); }
       checkImages();
+      // Keep the bottle up at least ~700ms so it never just flashes.
+      setTimeout(hideLoader, Math.max(0, 700 - (Date.now() - loaderStart)));
     });
 })();
